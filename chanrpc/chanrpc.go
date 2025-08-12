@@ -179,6 +179,7 @@ func (s *Server) Close() {
 // goroutine safe
 func (s *Server) Open(l int) *Client {
 	c := NewClient(l)
+	// client 和server 绑定，这样同步和异步可以关联
 	c.Attach(s)
 	return c
 }
