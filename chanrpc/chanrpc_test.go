@@ -31,10 +31,25 @@ func TestClient_AsynCall(t *testing.T) {
 	}
 	fmt.Println(result)
 
-	/*// 异步调用
+}
+
+func TestClient_AsynCall2(t *testing.T) {
+	server := NewServer(100)
+	server.Register("add", func(args []interface{}) interface{} {
+		return args[0].(int) + args[1].(int)
+	})
+
+	go func() {
+		for ci := range server.ChanCall {
+			server.Exec(ci)
+		}
+	}()
+
+	client := server.Open(0)
+	// 异步调用
 	client.AsynCall("add", 1, 2, func(ret interface{}, err error) {
 		if err == nil {
 			fmt.Println("Result:", ret)
 		}
-	})*/
+	})
 }

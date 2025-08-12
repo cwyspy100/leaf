@@ -28,7 +28,7 @@ func Example() {
 		return
 	}
 
-	err = rf.Read("test.txt")
+	err = rf.Read("testleaf.txt")
 	if err != nil {
 		return
 	}

@@ -17,20 +17,20 @@ func Example() {
 	// session
 	s := c.Ref()
 	defer c.UnRef(s)
-	err = s.DB("test").C("counters").RemoveId("test")
+	err = s.DB("testleaf").C("counters").RemoveId("testleaf")
 	if err != nil && err != mgo.ErrNotFound {
 		fmt.Println(err)
 		return
 	}
 
 	// auto increment
-	err = c.EnsureCounter("test", "counters", "test")
+	err = c.EnsureCounter("testleaf", "counters", "testleaf")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	for i := 0; i < 3; i++ {
-		id, err := c.NextSeq("test", "counters", "test")
+		id, err := c.NextSeq("testleaf", "counters", "testleaf")
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -39,7 +39,7 @@ func Example() {
 	}
 
 	// index
-	c.EnsureUniqueIndex("test", "counters", []string{"key1"})
+	c.EnsureUniqueIndex("testleaf", "counters", []string{"key1"})
 
 	// Output:
 	// 1

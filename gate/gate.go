@@ -91,6 +91,7 @@ type agent struct {
 
 func (a *agent) Run() {
 	for {
+		// 读取消息
 		data, err := a.conn.ReadMsg()
 		if err != nil {
 			log.Debug("read message: %v", err)
@@ -98,11 +99,13 @@ func (a *agent) Run() {
 		}
 
 		if a.gate.Processor != nil {
+			// 解析消息
 			msg, err := a.gate.Processor.Unmarshal(data)
 			if err != nil {
 				log.Debug("unmarshal message error: %v", err)
 				break
 			}
+			// 路由处理
 			err = a.gate.Processor.Route(msg, a)
 			if err != nil {
 				log.Debug("route message error: %v", err)

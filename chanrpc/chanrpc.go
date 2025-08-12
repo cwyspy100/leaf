@@ -32,12 +32,14 @@ type RetInfo struct {
 	// nil
 	// interface{}
 	// []interface{}
+	// 用于存储函数调用的返回值
 	ret interface{}
 	err error
 	// callback:
 	// func(err error)
 	// func(ret interface{}, err error)
 	// func(ret []interface{}, err error)
+	// 用于存储回调函数（callback），在函数调用完成后触发
 	cb interface{}
 }
 
@@ -195,6 +197,12 @@ func (c *Client) Attach(s *Server) {
 	c.s = s
 }
 
+/*
+*
+Client 结构体的 call 方法，主要功能是将调用信息（*CallInfo）发送到服务器的通道（c.s.ChanCall），
+并支持阻塞式和非阻塞式两种发送模式。
+同时通过 defer + recover 捕获发送过程中可能出现的恐慌（panic），将其转为错误返回。
+*/
 func (c *Client) call(ci *CallInfo, block bool) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -214,6 +222,9 @@ func (c *Client) call(ci *CallInfo, block bool) (err error) {
 	return
 }
 
+/*
+*	函数类型校验机制
+ */
 func (c *Client) f(id interface{}, n int) (f interface{}, err error) {
 	if c.s == nil {
 		err = errors.New("server not attached")
@@ -229,6 +240,7 @@ func (c *Client) f(id interface{}, n int) (f interface{}, err error) {
 	var ok bool
 	switch n {
 	case 0:
+		// 类型断言 f.(T) 用于检查 f 是否为类型 T，返回值 ok 表示断言是否成功
 		_, ok = f.(func([]interface{}))
 	case 1:
 		_, ok = f.(func([]interface{}) interface{})
@@ -245,6 +257,7 @@ func (c *Client) f(id interface{}, n int) (f interface{}, err error) {
 }
 
 func (c *Client) Call0(id interface{}, args ...interface{}) error {
+	// 函数类型校验机制
 	f, err := c.f(id, 0)
 	if err != nil {
 		return err
@@ -324,10 +337,10 @@ func (c *Client) AsynCall(id interface{}, _args ...interface{}) {
 	if len(_args) < 1 {
 		panic("callback function not found")
 	}
-
+	// 参数解析
 	args := _args[:len(_args)-1]
 	cb := _args[len(_args)-1]
-
+	// 类型校验
 	var n int
 	switch cb.(type) {
 	case func(error):
@@ -339,13 +352,13 @@ func (c *Client) AsynCall(id interface{}, _args ...interface{}) {
 	default:
 		panic("definition of callback function is invalid")
 	}
-
+	// 流量控制：通过 pendingAsynCall 和通道容量限制并发调用数，防止系统过载
 	// too many calls
 	if c.pendingAsynCall >= cap(c.ChanAsynRet) {
 		execCb(&RetInfo{err: errors.New("too many calls"), cb: cb})
 		return
 	}
-
+	//异步语义：
 	c.asynCall(id, args, cb, n)
 	c.pendingAsynCall++
 }
